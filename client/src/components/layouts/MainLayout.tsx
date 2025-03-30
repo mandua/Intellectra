@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/ui/sidebar";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
 
 interface MainLayoutProps {
@@ -10,7 +10,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [location] = useLocation();
 
   // Setup theme based on user preference

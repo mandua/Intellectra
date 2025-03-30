@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
 
 export interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -21,7 +21,7 @@ export function SidebarNav({
   ...props
 }: SidebarNavProps) {
   const [location] = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   // Close sidebar on mobile when navigating
   const handleNavigation = (href: string) => {
@@ -85,7 +85,7 @@ export function Sidebar({
   footerItems,
   ...props
 }: SidebarProps) {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

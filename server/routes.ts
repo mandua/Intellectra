@@ -14,7 +14,7 @@ import { z } from "zod";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
-import openai from "./lib/openai";
+import * as gemini from "./lib/gemini";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup API prefix
@@ -475,8 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid request data' });
       }
       
-      const recommendations = await openai.generateStudyRecommendations(
-        DEMO_USER_ID,
+      const recommendations = await gemini.generateStudyRecommendations(
         productivityData,
         subjects
       );
@@ -495,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Note content and subject are required' });
       }
       
-      const flashcards = await openai.generateFlashcardsFromNotes(
+      const flashcards = await gemini.generateFlashcardsFromNotes(
         noteContent,
         subject,
         count || 5
@@ -515,7 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Note content is required' });
       }
       
-      const enhanced = await openai.enhanceNotes(noteContent);
+      const enhanced = await gemini.enhanceNotes(noteContent);
       res.json(enhanced);
     } catch (err) {
       handleError(err, res);
@@ -536,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Deck has no flashcards' });
       }
       
-      const quiz = await openai.generateQuizQuestions(deckId, flashcards, count || 5);
+      const quiz = await gemini.generateQuizQuestions(deckId, flashcards, count || 5);
       res.json({ quiz });
     } catch (err) {
       handleError(err, res);
