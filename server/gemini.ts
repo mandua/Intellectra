@@ -4,7 +4,8 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/ge
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key-for-development");
 
 // Default Gemini model - the most capable model currently available
-const MODEL_NAME = "gemini-pro";
+// Using gemini-1.5-pro which is the latest Gemini model
+const MODEL_NAME = "gemini-1.5-pro";
 
 // Helper function to extract JSON from text responses
 function extractJsonFromText(text: string): any {

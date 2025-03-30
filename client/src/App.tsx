@@ -7,6 +7,7 @@ import Dashboard from "@/pages/Dashboard";
 import StudyPlanner from "@/pages/StudyPlanner";
 import Classroom from "@/pages/Classroom";
 import Flashcards from "@/pages/Flashcards";
+import LearningPath from "@/pages/LearningPath";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/study-planner" component={StudyPlanner} />
       <Route path="/classroom" component={Classroom} />
       <Route path="/flashcards" component={Flashcards} />
+      <Route path="/learning-path" component={LearningPath} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -109,6 +111,10 @@ function App() {
               <a href="/classroom" className={`p-3 flex flex-col items-center ${location === '/classroom' ? 'text-primary dark:text-primary-light' : 'text-neutral-500 dark:text-neutral-400'}`}>
                 <span className="material-icons text-xl">school</span>
                 <span className="text-xs mt-1">Classroom</span>
+              </a>
+              <a href="/learning-path" className={`p-3 flex flex-col items-center ${location === '/learning-path' ? 'text-primary dark:text-primary-light' : 'text-neutral-500 dark:text-neutral-400'}`}>
+                <span className="material-icons text-xl">route</span>
+                <span className="text-xs mt-1">Learn</span>
               </a>
             </nav>
           </div>

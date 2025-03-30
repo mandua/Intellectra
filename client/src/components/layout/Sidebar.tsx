@@ -66,6 +66,18 @@ const Sidebar = () => {
                 </a>
               </Link>
             </li>
+            <li>
+              <Link href="/learning-path">
+                <a className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                  location === '/learning-path' 
+                    ? 'bg-primary-light/10 text-primary dark:text-primary-light' 
+                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
+                }`}>
+                  <span className="material-icons">route</span>
+                  <span>Learning Path</span>
+                </a>
+              </Link>
+            </li>
           </ul>
         </div>
         

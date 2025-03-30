@@ -5,6 +5,102 @@ import { generateStudyRecommendations, generateFlashcardsFromNotes, enhanceNotes
 import { z } from "zod";
 import { insertTaskSchema, insertStudySessionSchema, insertNoteSchema, insertFlashcardSetSchema, insertFlashcardSchema, insertStudyProgressSchema } from "@shared/schema";
 
+// New API function to generate concept maps
+async function generateConceptMap(topic: string): Promise<{
+  nodes: Array<{
+    id: string;
+    label: string;
+    description: string;
+    x?: number;
+    y?: number;
+  }>,
+  edges: Array<{
+    source: string;
+    target: string;
+  }>
+}> {
+  try {
+    // This is where we'd call the Gemini API to generate a concept map
+    // For now, we'll return mock data based on the topic
+    
+    // In a real implementation, we would use Gemini to:
+    // 1. Identify key concepts related to the topic
+    // 2. Create relationships between concepts
+    // 3. Generate short descriptions for each concept
+    
+    // Basic simulation - in production this would use the AI model
+    const mainId = '1';
+    const nodes = [
+      { 
+        id: mainId, 
+        label: topic, 
+        description: 'Main concept', 
+        x: 250, 
+        y: 50 
+      }
+    ];
+    
+    const edges: Array<{ source: string; target: string }> = [];
+    const components = ['Definition', 'History', 'Applications', 'Related Concepts', 'Future Trends'];
+    
+    // Create first level nodes (key components)
+    components.forEach((component, index) => {
+      const id = (index + 2).toString();
+      const xPos = 100 + index * 100;
+      
+      nodes.push({
+        id,
+        label: `${component} of ${topic}`,
+        description: `Understanding the ${component.toLowerCase()} of ${topic}`,
+        x: xPos,
+        y: 150
+      });
+      
+      edges.push({
+        source: mainId,
+        target: id
+      });
+      
+      // Add some second level nodes for more depth
+      if (index < 3) {
+        const subId1 = `${id}-1`;
+        const subId2 = `${id}-2`;
+        
+        nodes.push({
+          id: subId1,
+          label: `${component} Detail 1`,
+          description: `First aspect of ${component.toLowerCase()}`,
+          x: xPos - 30,
+          y: 250
+        });
+        
+        nodes.push({
+          id: subId2,
+          label: `${component} Detail 2`,
+          description: `Second aspect of ${component.toLowerCase()}`,
+          x: xPos + 30,
+          y: 250
+        });
+        
+        edges.push({
+          source: id,
+          target: subId1
+        });
+        
+        edges.push({
+          source: id,
+          target: subId2
+        });
+      }
+    });
+    
+    return { nodes, edges };
+  } catch (error) {
+    console.error('Error generating concept map:', error);
+    throw error;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
@@ -335,6 +431,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating recommendations:", error);
       res.status(500).json({ message: "Failed to generate recommendations", error: (error as Error).message });
+    }
+  });
+  
+  // CONCEPT MAP
+  app.get("/api/concept-map", async (req, res) => {
+    const { topic } = req.query;
+    
+    if (!topic || typeof topic !== 'string') {
+      return res.status(400).json({ message: "Topic is required as a query parameter" });
+    }
+    
+    try {
+      const conceptMap = await generateConceptMap(topic);
+      res.json(conceptMap);
+    } catch (error) {
+      console.error("Error generating concept map:", error);
+      res.status(500).json({ message: "Failed to generate concept map", error: (error as Error).message });
     }
   });
 
