@@ -3,9 +3,9 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/ge
 // Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key-for-development");
 
-// Default Gemini model - the most capable model currently available
-// Using gemini-1.5-pro which is the latest Gemini model
-const MODEL_NAME = "gemini-1.5-pro";
+// Default Gemini model - as specified by user
+// Using gemini-2.0-flash as requested for optimal speed and quality
+const MODEL_NAME = "gemini-2.0-flash";
 
 // Helper function to extract JSON from text responses
 function extractJsonFromText(text: string): any {
@@ -169,6 +169,136 @@ export async function generateFlashcardsFromNotes(
         answer: "The key concepts could not be automatically generated. Please try again later."
       }
     ];
+  }
+}
+
+// Generate AI concept map
+export async function generateConceptMap(
+  topic: string
+): Promise<{
+  nodes: Array<{
+    id: string;
+    label: string;
+    description: string;
+    x?: number;
+    y?: number;
+  }>,
+  edges: Array<{
+    source: string;
+    target: string;
+  }>
+}> {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: MODEL_NAME,
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
+    });
+
+    const prompt = `
+      Create a concept map for the topic "${topic}". 
+      
+      A concept map should include:
+      1. Main concept (the topic itself)
+      2. Key sub-concepts (5-7 important components or aspects)
+      3. Relationships between concepts (connecting from one node to another)
+      4. Brief descriptions for each concept
+      
+      Format your response as a valid JSON object with:
+      1. "nodes": Array of objects, each with:
+         - "id": Unique string identifier
+         - "label": Short name of the concept (1-4 words)
+         - "description": Brief explanation of the concept (1-2 sentences)
+      
+      2. "edges": Array of objects, each with:
+         - "source": The id of the source node
+         - "target": The id of the target node
+      
+      For example, for topic "Machine Learning":
+      
+      {
+        "nodes": [
+          {
+            "id": "1",
+            "label": "Machine Learning",
+            "description": "Field of AI focused on building systems that learn from data."
+          },
+          {
+            "id": "2",
+            "label": "Supervised Learning",
+            "description": "Learning from labeled training data to make predictions."
+          }
+        ],
+        "edges": [
+          {
+            "source": "1",
+            "target": "2"
+          }
+        ]
+      }
+      
+      Do not include any positional information like x or y coordinates.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    const parsed = extractJsonFromText(text);
+    
+    // Add random spacing for visualization
+    // This helps position nodes in a more readable way
+    const nodes = parsed.nodes.map((node: any, index: number) => ({
+      ...node,
+      x: index === 0 ? 250 : 100 + Math.random() * 400, // Center first node (main topic)
+      y: index === 0 ? 50 : 100 + Math.random() * 300  
+    }));
+    
+    return { 
+      nodes,
+      edges: parsed.edges || []
+    };
+  } catch (error) {
+    console.error("Error generating concept map:", error);
+    // Return basic concept map if Gemini call fails
+    const nodes = [
+      { 
+        id: '1', 
+        label: topic, 
+        description: 'Main concept', 
+        x: 250, 
+        y: 50 
+      },
+      { 
+        id: '2', 
+        label: `Definition of ${topic}`, 
+        description: `Understanding what ${topic} means and its core principles.`, 
+        x: 100, 
+        y: 150 
+      },
+      { 
+        id: '3', 
+        label: `Applications of ${topic}`, 
+        description: `How ${topic} is used in real-world scenarios.`, 
+        x: 400, 
+        y: 150 
+      }
+    ];
+    
+    const edges = [
+      { source: '1', target: '2' },
+      { source: '1', target: '3' }
+    ];
+    
+    return { nodes, edges };
   }
 }
 
