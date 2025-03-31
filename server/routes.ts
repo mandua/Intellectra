@@ -371,6 +371,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate concept map", error: (error as Error).message });
     }
   });
+  
+  // CONCEPT FLASHCARDS - generate flashcards for a specific concept
+  app.post("/api/concept-flashcards", async (req, res) => {
+    const { concept, description, bulletPoints } = req.body;
+    
+    if (!concept || typeof concept !== 'string') {
+      return res.status(400).json({ message: "Concept name is required in the request body" });
+    }
+    
+    try {
+      // Prepare prompt content by combining description and bullet points
+      let contentForFlashcards = concept;
+      
+      if (description) {
+        contentForFlashcards += `\n\nDescription: ${description}`;
+      }
+      
+      if (bulletPoints && Array.isArray(bulletPoints) && bulletPoints.length > 0) {
+        contentForFlashcards += `\n\nKey Points:\n${bulletPoints.map(point => `- ${point}`).join('\n')}`;
+      }
+      
+      // Generate flashcards using the existing function
+      const flashcards = await generateFlashcardsFromNotes(contentForFlashcards, concept, 5);
+      res.json(flashcards);
+    } catch (error) {
+      console.error("Error generating concept flashcards:", error);
+      res.status(500).json({ message: "Failed to generate flashcards", error: (error as Error).message });
+    }
+  });
 
   return httpServer;
 }

@@ -77,9 +77,7 @@ export default function FlashCard({
       style={{ height }}
     >
       <div 
-        className={`w-full transition-all duration-500 transform-style-3d ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
+        className={`w-full transition-all duration-500 transform-style-3d`}
         style={{ 
           transformStyle: 'preserve-3d', 
           transition: 'transform 0.6s',
@@ -107,7 +105,17 @@ export default function FlashCard({
                   rows={3}
                 />
               </div>
-              <div className="flex gap-2 justify-end">
+              <div className="mt-3">
+                <p className="text-sm font-semibold mb-1">Answer:</p>
+                <Textarea
+                  value={editAnswer}
+                  onChange={(e) => setEditAnswer(e.target.value)}
+                  placeholder="Enter answer"
+                  className="resize-none bg-white dark:bg-gray-800"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-2 justify-end mt-2">
                 <Button variant="outline" size="sm" onClick={handleCancel}>
                   <X className="h-4 w-4 mr-1" />
                   Cancel
@@ -150,30 +158,7 @@ export default function FlashCard({
             minHeight: '120px'
           }}
         >
-          {isEditing ? (
-            <div className="flex flex-col gap-3">
-              <div>
-                <p className="text-sm font-semibold mb-1">Answer:</p>
-                <Textarea
-                  value={editAnswer}
-                  onChange={(e) => setEditAnswer(e.target.value)}
-                  placeholder="Enter answer"
-                  className="resize-none"
-                  rows={3}
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" size="sm" onClick={handleCancel}>
-                  <X className="h-4 w-4 mr-1" />
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-1" />
-                  Save
-                </Button>
-              </div>
-            </div>
-          ) : (
+          {!isEditing && (
             <>
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-base font-medium">Answer</h3>
