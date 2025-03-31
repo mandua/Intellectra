@@ -30,14 +30,103 @@ export default function LearningPath() {
     data: { label: string; description: string; bulletPoints?: string[]; [key: string]: any };
   } | null>(null);
 
+  // Generate default concept map data for quick testing
+  const createDefaultConceptMap = (topicName: string) => {
+    return {
+      nodes: [
+        { 
+          id: '1', 
+          label: topicName, 
+          description: `Main concept and foundational principles of ${topicName}.`, 
+          bulletPoints: ['Core principles', 'Fundamental aspects', 'Basic definitions', 'Key terminology'],
+          x: 250, 
+          y: 50 
+        },
+        { 
+          id: '2', 
+          label: `Definition of ${topicName}`, 
+          description: `Understanding what ${topicName} means and its core principles.`, 
+          bulletPoints: ['Origin and history', 'Conceptual framework', 'Critical characteristics'],
+          x: 100, 
+          y: 200 
+        },
+        { 
+          id: '3', 
+          label: `Applications of ${topicName}`, 
+          description: `How ${topicName} is applied in real-world scenarios.`, 
+          bulletPoints: ['Practical implementations', 'Real-world examples', 'Case studies', 'Industry relevance'],
+          x: 400, 
+          y: 200 
+        },
+        { 
+          id: '4', 
+          label: `History of ${topicName}`, 
+          description: `The development and evolution of ${topicName} over time.`, 
+          bulletPoints: ['Key milestones', 'Historical context', 'Major contributors', 'Paradigm shifts'],
+          x: 100, 
+          y: 350 
+        },
+        { 
+          id: '5', 
+          label: `Future of ${topicName}`, 
+          description: `Emerging trends and future directions in ${topicName}.`, 
+          bulletPoints: ['Current research', 'Innovative approaches', 'Potential developments', 'Future challenges'],
+          x: 400, 
+          y: 350 
+        }
+      ],
+      edges: [
+        { source: '1', target: '2' },
+        { source: '1', target: '3' },
+        { source: '2', target: '4' },
+        { source: '3', target: '5' }
+      ]
+    };
+  };
+
   // Handle topic search submission
   const handleSearchTopic = (e: React.FormEvent) => {
     e.preventDefault();
     if (topic.trim()) {
       setSearchedTopic(topic);
+      
+      // Set default map data while waiting for API response
+      setConceptMapData(createDefaultConceptMap(topic));
+      setSavedMapData(createDefaultConceptMap(topic));
+      
+      // If in notes mode and notes are provided, generate from notes
       if (activeTab === 'notes' && notes.trim()) {
         generateFromNotes();
+      } else {
+        // Otherwise, fetch from API without notes
+        fetchConceptMapFromAPI(topic);
       }
+    }
+  };
+  
+  // Fetch concept map from API
+  const fetchConceptMapFromAPI = async (topicName: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/concept-map?topic=${encodeURIComponent(topicName)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate concept map');
+      }
+      
+      const data = await response.json();
+      setConceptMapData(data);
+      setSavedMapData(data);
+    } catch (error) {
+      console.error('Error generating concept map:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate concept map. Using default layout.',
+        variant: 'destructive'
+      });
+      // Keep using the default map data
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -213,6 +302,13 @@ export default function LearningPath() {
                 onClick={() => {
                   setTopic(t);
                   setSearchedTopic(t);
+                  
+                  // Set default map data while waiting for API response
+                  setConceptMapData(createDefaultConceptMap(t));
+                  setSavedMapData(createDefaultConceptMap(t));
+                  
+                  // Fetch from API
+                  fetchConceptMapFromAPI(t);
                 }}
                 className="flex items-center"
                 disabled={isLoading}
