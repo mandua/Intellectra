@@ -340,14 +340,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // CONCEPT MAP
   app.get("/api/concept-map", async (req, res) => {
-    const { topic } = req.query;
+    const { topic, notes } = req.query;
     
     if (!topic || typeof topic !== 'string') {
       return res.status(400).json({ message: "Topic is required as a query parameter" });
     }
     
     try {
-      const conceptMap = await generateConceptMap(topic);
+      const conceptMap = await generateConceptMap(topic, typeof notes === 'string' ? notes : undefined);
+      res.json(conceptMap);
+    } catch (error) {
+      console.error("Error generating concept map:", error);
+      res.status(500).json({ message: "Failed to generate concept map", error: (error as Error).message });
+    }
+  });
+  
+  // CONCEPT MAP with POST (for larger text input)
+  app.post("/api/concept-map", async (req, res) => {
+    const { topic, notes } = req.body;
+    
+    if (!topic || typeof topic !== 'string') {
+      return res.status(400).json({ message: "Topic is required in the request body" });
+    }
+    
+    try {
+      const conceptMap = await generateConceptMap(topic, notes);
       res.json(conceptMap);
     } catch (error) {
       console.error("Error generating concept map:", error);

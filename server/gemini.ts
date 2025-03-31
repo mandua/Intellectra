@@ -174,7 +174,8 @@ export async function generateFlashcardsFromNotes(
 
 // Generate AI concept map
 export async function generateConceptMap(
-  topic: string
+  topic: string,
+  notes?: string
 ): Promise<{
   nodes: Array<{
     id: string;
@@ -203,38 +204,49 @@ export async function generateConceptMap(
       ],
     });
 
+    const noteContext = notes ? 
+      `Based on the following notes provided by the user:
+      
+      ${notes}
+      
+      ` : '';
+
     const prompt = `
-      Create a concept map for the topic "${topic}". 
+      ${noteContext}Create a concept map for the topic "${topic}". 
       
       A concept map should include:
-      1. Main concept (the topic itself)
-      2. Key sub-concepts (5-7 important components or aspects)
-      3. Relationships between concepts (connecting from one node to another)
-      4. Brief descriptions for each concept
+      1. Main concept (the topic itself at the top level)
+      2. Key sub-concepts (5-8 important components or aspects) branching from the main concept
+      3. Further sub-concepts (2-3 for each key concept) where appropriate
+      4. Clear hierarchical relationships between concepts
+      5. Brief but informative descriptions for each concept
       
       Format your response as a valid JSON object with:
       1. "nodes": Array of objects, each with:
-         - "id": Unique string identifier
+         - "id": Unique string identifier (numbers only)
          - "label": Short name of the concept (1-4 words)
-         - "description": Brief explanation of the concept (1-2 sentences)
+         - "description": Brief but comprehensive explanation of the concept (2-3 sentences)
+         - "bulletPoints": Array of 3-4 key points about this concept
       
       2. "edges": Array of objects, each with:
          - "source": The id of the source node
          - "target": The id of the target node
       
-      For example, for topic "Machine Learning":
+      For example, for topic "Photosynthesis":
       
       {
         "nodes": [
           {
             "id": "1",
-            "label": "Machine Learning",
-            "description": "Field of AI focused on building systems that learn from data."
+            "label": "Photosynthesis",
+            "description": "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water. Generates oxygen as a byproduct.",
+            "bulletPoints": ["Converts light energy to chemical energy", "Occurs in chloroplasts", "Essential for most life on Earth", "Formula: 6CO2 + 6H2O → C6H12O6 + 6O2"]
           },
           {
             "id": "2",
-            "label": "Supervised Learning",
-            "description": "Learning from labeled training data to make predictions."
+            "label": "Light Reactions",
+            "description": "The first stage of photosynthesis where light energy is captured and converted to chemical energy. Takes place in thylakoid membranes of chloroplasts.",
+            "bulletPoints": ["Requires direct light", "Produces ATP and NADPH", "Releases oxygen as byproduct", "Involves photosystems I and II"]
           }
         ],
         "edges": [
@@ -245,7 +257,7 @@ export async function generateConceptMap(
         ]
       }
       
-      Do not include any positional information like x or y coordinates.
+      Do not include any positional information like x or y coordinates. Ensure each node has a unique ID and that edges correctly define the hierarchical relationships between concepts.
     `;
 
     const result = await model.generateContent(prompt);
@@ -273,7 +285,8 @@ export async function generateConceptMap(
       { 
         id: '1', 
         label: topic, 
-        description: 'Main concept', 
+        description: 'Main concept and foundational principles.', 
+        bulletPoints: ['Core principles', 'Fundamental aspects', 'Basic definitions', 'Key terminology'],
         x: 250, 
         y: 50 
       },
@@ -281,6 +294,7 @@ export async function generateConceptMap(
         id: '2', 
         label: `Definition of ${topic}`, 
         description: `Understanding what ${topic} means and its core principles.`, 
+        bulletPoints: ['Origin and history', 'Conceptual framework', 'Critical characteristics'],
         x: 100, 
         y: 150 
       },
@@ -288,6 +302,7 @@ export async function generateConceptMap(
         id: '3', 
         label: `Applications of ${topic}`, 
         description: `How ${topic} is used in real-world scenarios.`, 
+        bulletPoints: ['Practical implementations', 'Real-world examples', 'Case studies', 'Industry relevance'],
         x: 400, 
         y: 150 
       }
