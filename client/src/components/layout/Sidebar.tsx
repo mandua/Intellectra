@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useUser } from "@/context/UserContext";
-import intellectraLogo from "@/assets/intellectra.jpg";
+import Logo from "@/components/layout/Logo";
 
 const Sidebar = () => {
   const [location] = useLocation();
@@ -9,9 +9,7 @@ const Sidebar = () => {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-neutral-800 shadow-md z-10">
       <div className="p-4 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-700">
-        <div className="w-8 h-8 rounded-md overflow-hidden">
-          <img src={intellectraLogo} alt="Intellectra Logo" className="w-full h-full object-cover" />
-        </div>
+        <Logo size={38} className="text-primary dark:text-primary-light" />
         <h1 className="text-xl font-bold text-primary dark:text-primary-light">Intellectra</h1>
       </div>
       
