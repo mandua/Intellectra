@@ -12,6 +12,7 @@ import ReactFlow, {
   NodeTypes,
   MarkerType,
   useReactFlow,
+  ReactFlowProvider,
   Panel,
   OnConnectStart,
   OnConnectEnd,
@@ -101,7 +102,8 @@ type ConceptMapProps = {
   onUpdateMap?: (updatedMapData: any) => void; // Callback to update parent component
 };
 
-export default function ConceptMap({ 
+// Wrap the component with ReactFlowProvider
+function ConceptMapComponent({ 
   topic, 
   onNodeClick, 
   conceptMapData: initialConceptMapData,
@@ -646,5 +648,14 @@ export default function ConceptMap({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Export the wrapped component with ReactFlowProvider
+export default function ConceptMap(props: ConceptMapProps) {
+  return (
+    <ReactFlowProvider>
+      <ConceptMapComponent {...props} />
+    </ReactFlowProvider>
   );
 }
