@@ -204,7 +204,14 @@ def enhance_notes_route():
         return jsonify({"message": "Notes and subject are required"}), 400
     
     try:
-        enhanced = enhance_notes(notes, subject)
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        enhanced = loop.run_until_complete(enhance_notes(notes, subject))
+        loop.close()
+        
         return jsonify(enhanced)
     except Exception as e:
         print("Error enhancing notes:", str(e))
@@ -293,7 +300,15 @@ def generate_flashcards():
         return jsonify({"message": "Notes and subject are required"}), 400
     
     try:
-        flashcards = generate_flashcards_from_notes(notes, subject, count)
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Run the async function and get the result
+        flashcards = loop.run_until_complete(generate_flashcards_from_notes(notes, subject, count))
+        loop.close()
+        
         return jsonify(flashcards)
     except Exception as e:
         print("Error generating flashcards:", str(e))
@@ -334,11 +349,17 @@ def get_recommendations():
         upcoming_exams = ["Database Midterm", "Algorithm Final"]
         struggling_areas = ["Graph Algorithms", "SQL Optimization"]
         
-        recommendations = generate_study_recommendations(
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        recommendations = loop.run_until_complete(generate_study_recommendations(
             recent_topics,
             upcoming_exams,
             struggling_areas
-        )
+        ))
+        loop.close()
         
         return jsonify(recommendations)
     except Exception as e:
@@ -355,7 +376,14 @@ def get_concept_map():
         return jsonify({"message": "Topic is required as a query parameter"}), 400
     
     try:
-        concept_map = generate_concept_map(topic, notes)
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        concept_map = loop.run_until_complete(generate_concept_map(topic, notes))
+        loop.close()
+        
         return jsonify(concept_map)
     except Exception as e:
         print("Error generating concept map:", str(e))
@@ -372,7 +400,14 @@ def create_concept_map():
         return jsonify({"message": "Topic is required in the request body"}), 400
     
     try:
-        concept_map = generate_concept_map(topic, notes)
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        concept_map = loop.run_until_complete(generate_concept_map(topic, notes))
+        loop.close()
+        
         return jsonify(concept_map)
     except Exception as e:
         print("Error generating concept map:", str(e))
@@ -399,8 +434,15 @@ def generate_concept_flashcards():
         if bullet_points and isinstance(bullet_points, list) and len(bullet_points) > 0:
             content_for_flashcards += f"\n\nKey Points:\n{chr(10).join([f'- {point}' for point in bullet_points])}"
         
+        # Create an event loop to run the async function
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         # Generate flashcards using the existing function - increase count for more comprehensive learning
-        flashcards = generate_flashcards_from_notes(content_for_flashcards, concept, 7)
+        flashcards = loop.run_until_complete(generate_flashcards_from_notes(content_for_flashcards, concept, 7))
+        loop.close()
+        
         return jsonify(flashcards)
     except Exception as e:
         print("Error generating concept flashcards:", str(e))
