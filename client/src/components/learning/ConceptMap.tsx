@@ -41,13 +41,12 @@ import { Label } from '@/components/ui/label';
 // Custom node types
 const ConceptNode = ({ data, isConnectable }: { data: any, isConnectable?: boolean }) => {
   return (
-    <div className="relative px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px]">
-      {data.isEditMode && (
-        <div className="absolute -right-3 -top-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-grab" 
-            onMouseDown={(e) => e.stopPropagation()}>
-          <Move className="h-3 w-3 text-white" />
-        </div>
-      )}
+    <div className="relative px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px] cursor-move">
+      {/* Always show grab handle for better UX */}
+      <div className="absolute -right-3 -top-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-grab" 
+          onMouseDown={(e) => e.stopPropagation()}>
+        <Move className="h-3 w-3 text-white" />
+      </div>
       
       <div className="text-sm font-medium mb-1 text-primary">{data.label}</div>
       <div className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{data.description}</div>
@@ -650,6 +649,10 @@ function ConceptMapComponent({
             deleteKeyCode="Delete"
             selectionKeyCode="Shift"
             multiSelectionKeyCode="Control"
+            // Always allow node dragging, even in non-edit mode
+            nodesDraggable={true}
+            // Always show connections
+            nodesConnectable={isEditMode}
             // connectionMode is not needed
             snapToGrid={isEditMode}
             snapGrid={[20, 20]}
