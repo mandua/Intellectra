@@ -41,12 +41,13 @@ import { Label } from '@/components/ui/label';
 // Custom node types
 const ConceptNode = ({ data, isConnectable }: { data: any, isConnectable?: boolean }) => {
   return (
-    <div className="relative px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px] cursor-move">
-      {/* Always show grab handle for better UX */}
-      <div className="absolute -right-3 -top-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-grab" 
-          onMouseDown={(e) => e.stopPropagation()}>
-        <Move className="h-3 w-3 text-white" />
-      </div>
+    <div className="relative px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px]">
+      {data.isEditMode && (
+        <div className="absolute -right-3 -top-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-grab" 
+            onMouseDown={(e) => e.stopPropagation()}>
+          <Move className="h-3 w-3 text-white" />
+        </div>
+      )}
       
       <div className="text-sm font-medium mb-1 text-primary">{data.label}</div>
       <div className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{data.description}</div>
@@ -449,110 +450,56 @@ function ConceptMapComponent({
     async function generateConceptMap() {
       setIsLoading(true);
       try {
-        // Check if we already have data
-        if (initialConceptMapData) {
-          // Use provided data
-          const conceptMapData = initialConceptMapData;
-          
-          // Organize nodes in a hierarchical layout
-          const organizedNodes = organizeNodes(conceptMapData.nodes, conceptMapData.edges);
-          
-          // Transform the data for ReactFlow
-          const flowNodes: Node[] = organizedNodes.map((node: { 
-            id: string; 
-            label: string; 
-            description: string; 
-            x?: number; 
-            y?: number;
-            bulletPoints?: string[];
-            [key: string]: any;
-          }, index: number) => ({
-            id: node.id,
-            type: 'concept',
-            position: { 
-              x: node.x !== undefined ? node.x : 100 + (index % 3) * 200, 
-              y: node.y !== undefined ? node.y : 100 + Math.floor(index / 3) * 200 
-            },
-            data: { 
-              ...node, 
-              isEditMode: isEditMode,
-              onClick: () => handleNodeClick(node.id, node),
-              onAddConnection: isEditMode ? () => handleAddConnection(node.id) : undefined,
-            }
-          }));
-          
-          const flowEdges: Edge[] = conceptMapData.edges.map((edge: { source: string; target: string }) => ({
-            id: `e-${edge.source}-${edge.target}`,
-            source: edge.source,
-            target: edge.target,
-            animated: false,
-            type: 'smoothstep',
-            style: { stroke: '#9CA3AF' },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 20,
-              height: 20,
-            }
-          }));
-          
-          // Save the initial state for potential reset
-          nodesRef.current = [...flowNodes];
-          edgesRef.current = [...flowEdges];
-          
-          setNodes(flowNodes);
-          setEdges(flowEdges);
-        } else {
-          // Fetch from API if no data provided
-          const conceptMapData = await fetchConceptMapData(topic, notes);
-          
-          // Organize nodes in a hierarchical layout
-          const organizedNodes = organizeNodes(conceptMapData.nodes, conceptMapData.edges);
-          
-          // Transform the data for ReactFlow
-          const flowNodes: Node[] = organizedNodes.map((node: { 
-            id: string; 
-            label: string; 
-            description: string; 
-            x?: number; 
-            y?: number;
-            bulletPoints?: string[];
-            [key: string]: any;
-          }, index: number) => ({
-            id: node.id,
-            type: 'concept',
-            position: { 
-              x: node.x !== undefined ? node.x : 100 + (index % 3) * 200, 
-              y: node.y !== undefined ? node.y : 100 + Math.floor(index / 3) * 200 
-            },
-            data: { 
-              ...node, 
-              isEditMode: isEditMode,
-              onClick: () => handleNodeClick(node.id, node),
-              onAddConnection: isEditMode ? () => handleAddConnection(node.id) : undefined,
-            }
-          }));
-          
-          const flowEdges: Edge[] = conceptMapData.edges.map((edge: { source: string; target: string }) => ({
-            id: `e-${edge.source}-${edge.target}`,
-            source: edge.source,
-            target: edge.target,
-            animated: false,
-            type: 'smoothstep',
-            style: { stroke: '#9CA3AF' },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 20,
-              height: 20,
-            }
-          }));
-          
-          // Save the initial state for potential reset
-          nodesRef.current = [...flowNodes];
-          edgesRef.current = [...flowEdges];
-          
-          setNodes(flowNodes);
-          setEdges(flowEdges);
-        }
+        // Use provided data or fetch from API
+        const conceptMapData = initialConceptMapData || await fetchConceptMapData(topic, notes);
+        
+        // Organize nodes in a hierarchical layout
+        const organizedNodes = organizeNodes(conceptMapData.nodes, conceptMapData.edges);
+        
+        // Transform the data for ReactFlow
+        const flowNodes: Node[] = organizedNodes.map((node: { 
+          id: string; 
+          label: string; 
+          description: string; 
+          x?: number; 
+          y?: number;
+          bulletPoints?: string[];
+          [key: string]: any;
+        }, index: number) => ({
+          id: node.id,
+          type: 'concept',
+          position: { 
+            x: node.x !== undefined ? node.x : 100 + (index % 3) * 200, 
+            y: node.y !== undefined ? node.y : 100 + Math.floor(index / 3) * 200 
+          },
+          data: { 
+            ...node, 
+            isEditMode: isEditMode,
+            onClick: () => handleNodeClick(node.id, node),
+            onAddConnection: isEditMode ? () => handleAddConnection(node.id) : undefined,
+          }
+        }));
+        
+        const flowEdges: Edge[] = conceptMapData.edges.map((edge: { source: string; target: string }) => ({
+          id: `e-${edge.source}-${edge.target}`,
+          source: edge.source,
+          target: edge.target,
+          animated: false,
+          type: 'smoothstep',
+          style: { stroke: '#9CA3AF' },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          }
+        }));
+        
+        // Save the initial state for potential reset
+        nodesRef.current = [...flowNodes];
+        edgesRef.current = [...flowEdges];
+        
+        setNodes(flowNodes);
+        setEdges(flowEdges);
       } catch (error) {
         console.error('Error generating concept map:', error);
         toast({
@@ -649,10 +596,6 @@ function ConceptMapComponent({
             deleteKeyCode="Delete"
             selectionKeyCode="Shift"
             multiSelectionKeyCode="Control"
-            // Always allow node dragging, even in non-edit mode
-            nodesDraggable={true}
-            // Always show connections
-            nodesConnectable={isEditMode}
             // connectionMode is not needed
             snapToGrid={isEditMode}
             snapGrid={[20, 20]}
