@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import FlashCardSet from './FlashCardSet';
 
 interface ConceptDetailProps {
   conceptId: string;
@@ -22,6 +24,7 @@ interface ConceptDetailProps {
 }
 
 export default function ConceptDetail({ conceptId, conceptData, onClose, onUpdate }: ConceptDetailProps) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('explanation');
   const [videoLoading, setVideoLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -238,26 +241,26 @@ export default function ConceptDetail({ conceptId, conceptData, onClose, onUpdat
             
             <TabsContent value="flashcards" className="min-h-[400px]">
               <ScrollArea className="h-[400px]">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">Study Flashcards</h3>
-                    <Button variant="outline" size="sm">Export to PDF</Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {mockFlashcards.map((card, index) => (
-                      <div key={index} className="border rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 dark:bg-gray-800 p-3 border-b">
-                          <h4 className="font-medium">Question {index + 1}:</h4>
-                          <p>{card.question}</p>
-                        </div>
-                        <div className="p-3 bg-white dark:bg-gray-900">
-                          <h4 className="font-medium text-gray-500 dark:text-gray-400 mb-1">Answer:</h4>
-                          <p>{card.answer}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="pb-4">
+                  <FlashCardSet 
+                    title={`${conceptData.label} Flashcards`}
+                    description="Test your understanding of this concept with these interactive flashcards"
+                    cards={mockFlashcards.map((card, index) => ({
+                      id: `card-${conceptData.label.replace(/\s+/g, '-').toLowerCase()}-${index}`,
+                      question: card.question,
+                      answer: card.answer
+                    }))}
+                    onCardUpdate={(cardId, question, answer) => {
+                      console.log('Card updated:', { cardId, question, answer });
+                      // In a real app, this would persist the changes to the backend
+                    }}
+                    onAddCard={() => {
+                      toast({
+                        title: 'Creating new flashcard',
+                        description: 'This would create a new flashcard in a real application.'
+                      });
+                    }}
+                  />
                 </div>
               </ScrollArea>
             </TabsContent>
