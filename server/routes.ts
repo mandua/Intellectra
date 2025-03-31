@@ -392,8 +392,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contentForFlashcards += `\n\nKey Points:\n${bulletPoints.map(point => `- ${point}`).join('\n')}`;
       }
       
-      // Generate flashcards using the existing function
-      const flashcards = await generateFlashcardsFromNotes(contentForFlashcards, concept, 5);
+      // Generate flashcards using the existing function - increase count for more comprehensive learning
+      const flashcards = await generateFlashcardsFromNotes(contentForFlashcards, concept, 7);
       res.json(flashcards);
     } catch (error) {
       console.error("Error generating concept flashcards:", error);

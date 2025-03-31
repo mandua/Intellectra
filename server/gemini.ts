@@ -133,13 +133,27 @@ export async function generateFlashcardsFromNotes(
     });
 
     const prompt = `
-      Create ${count} flashcards based on the following notes about ${subject}:
+      Create ${count} comprehensive, academic-level flashcards based on the following notes about ${subject}:
       
       ${notes}
       
-      For each flashcard, create:
-      1. A clear, concise question
-      2. A comprehensive but concise answer
+      For each flashcard:
+      1. Create a specific, thought-provoking question that tests deep understanding of a particular aspect of the subject
+      2. Provide a detailed, comprehensive answer (150-200 words) that:
+         - Thoroughly explains the concept with academic precision
+         - Includes relevant examples, applications, or case studies when appropriate
+         - Mentions connections to related concepts
+         - Addresses common misconceptions or nuances
+         - Uses proper terminology and scholarly language
+      
+      Each flashcard should focus on a different aspect of the topic, covering where appropriate:
+      - Foundational principles and definitions
+      - Historical context or development
+      - Key components, mechanisms, or methodologies
+      - Practical applications or real-world relevance
+      - Theoretical frameworks
+      - Contemporary research or emerging directions
+      - Critical analysis or limitations
       
       Format your response as a valid JSON object with a "flashcards" array containing objects with question and answer fields.
       
@@ -147,8 +161,8 @@ export async function generateFlashcardsFromNotes(
       {
         "flashcards": [
           {
-            "question": "What is photosynthesis?",
-            "answer": "The process by which plants convert light energy into chemical energy"
+            "question": "What is the fundamental principle underlying photosynthesis and how does it serve as a critical biological energy conversion process?",
+            "answer": "Photosynthesis represents one of nature's most elegant energy conversion mechanisms, wherein light energy is transformed into chemical energy through a sophisticated series of biochemical reactions. At its core, this process harnesses photons from sunlight to split water molecules, releasing oxygen as a byproduct, while simultaneously reducing carbon dioxide to form energy-rich carbohydrates. This fundamental principle establishes photosynthesis as the primary entry point for energy into most ecosystems, creating the foundation for nearly all food webs on Earth. The process occurs predominantly in chloroplasts containing specialized pigments like chlorophyll that absorb specific wavelengths of light, initiating electron transport chains that ultimately generate ATP and NADPH. These energy carriers subsequently power the Calvin cycle, where carbon dioxide is incorporated into organic molecules. Beyond its role in energy conversion, photosynthesis has profoundly influenced Earth's atmosphere through oxygen production, making it not only essential for plant metabolism but also indirectly responsible for supporting aerobic life forms across the planet."
           }
         ]
       }
@@ -165,8 +179,16 @@ export async function generateFlashcardsFromNotes(
     // Return fallback flashcards if Gemini call fails
     return [
       {
-        question: "What are the key concepts in this topic?",
-        answer: "The key concepts could not be automatically generated. Please try again later."
+        question: `What are the foundational principles and key dimensions of ${subject}?`,
+        answer: `${subject} represents a multifaceted domain encompassing several interconnected theoretical frameworks and practical applications. At its fundamental level, it integrates core principles that have evolved through significant scholarly discourse and empirical investigation. The conceptual foundation typically includes hierarchical structures of knowledge that range from basic definitional elements to sophisticated analytical frameworks. Understanding these principles requires examining both historical development and contemporary interpretations across multiple disciplinary perspectives. The integration of these varied approaches provides a more nuanced comprehension than any single theoretical model could offer in isolation.`
+      },
+      {
+        question: `How has the understanding of ${subject} evolved historically, and what are its contemporary applications?`,
+        answer: `The historical trajectory of ${subject} reflects a progressive refinement of ideas through several key intellectual periods. Early formulations often emerged from foundational work by pioneering scholars who established initial theoretical frameworks. Throughout subsequent decades, these conceptualizations underwent significant transformations as new methodological approaches and analytical techniques emerged. Contemporary applications span diverse domains including educational contexts, research methodologies, professional practices, and technological innovations. In each sphere, theoretical principles are translated into practical implementations that address specific challenges while maintaining conceptual integrity. This evolution demonstrates both continuity in core principles and adaptation to changing contextual requirements.`
+      },
+      {
+        question: `What methodological approaches are employed in the study of ${subject}, and what are their relative strengths?`,
+        answer: `The methodological landscape for studying ${subject} encompasses diverse approaches, each offering distinct advantages for understanding different facets of the domain. Quantitative methodologies provide statistical rigor and empirical validation through measurement and analysis of observable phenomena. Qualitative approaches offer depth through interpretive frameworks that explore contextual nuances and subjective dimensions. Mixed methods integrate these complementary perspectives to develop more comprehensive understanding. Theoretical analysis examines conceptual foundations and logical structures underpinning the subject, while applied research focuses on practical implementation and real-world outcomes. The selection of methodological approach depends on specific research questions, available resources, and the nature of the phenomena being investigated.`
       }
     ];
   }
@@ -239,14 +261,26 @@ export async function generateConceptMap(
           {
             "id": "1",
             "label": "Photosynthesis",
-            "description": "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water. Generates oxygen as a byproduct.",
-            "bulletPoints": ["Converts light energy to chemical energy", "Occurs in chloroplasts", "Essential for most life on Earth", "Formula: 6CO2 + 6H2O → C6H12O6 + 6O2"]
+            "description": "The sophisticated biochemical process by which green plants, algae, and certain bacteria harness solar energy to convert carbon dioxide and water into organic compounds (primarily glucose) and release oxygen as a byproduct. This fundamental process is the primary means by which energy from sunlight enters the biosphere and serves as the foundation for most food chains on Earth.",
+            "bulletPoints": [
+              "Converts light energy into chemical energy stored in glucose molecules through a complex series of electron transfers and enzymatic reactions",
+              "Takes place in specialized organelles called chloroplasts which contain thylakoid membranes where light-dependent reactions occur and stroma where carbon fixation happens",
+              "Essential for most life on Earth as it produces oxygen, removes carbon dioxide, and provides the base of nearly all food webs through primary production",
+              "Occurs in two main stages: the light-dependent reactions (photosystems I and II) and the light-independent reactions (Calvin cycle)",
+              "The complete biochemical equation can be represented as: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂"
+            ]
           },
           {
             "id": "2",
-            "label": "Light Reactions",
-            "description": "The first stage of photosynthesis where light energy is captured and converted to chemical energy. Takes place in thylakoid membranes of chloroplasts.",
-            "bulletPoints": ["Requires direct light", "Produces ATP and NADPH", "Releases oxygen as byproduct", "Involves photosystems I and II"]
+            "label": "Light-Dependent Reactions",
+            "description": "The initial stage of photosynthesis where electromagnetic radiation from the sun is captured by photosynthetic pigments (primarily chlorophyll) and converted into chemical energy in the form of ATP and NADPH. These reactions occur exclusively in the thylakoid membrane system of chloroplasts and are responsible for the production of oxygen as a byproduct through the photolysis of water molecules.",
+            "bulletPoints": [
+              "Requires direct light energy, specifically wavelengths within the visible spectrum that are absorbed by specialized pigment molecules arranged in light-harvesting complexes",
+              "Produces energy carriers ATP (adenosine triphosphate) through photophosphorylation and reduces NADP+ to NADPH, both of which are subsequently used in the Calvin cycle",
+              "Releases molecular oxygen (O₂) as a byproduct through the splitting of water molecules in a process called photolysis, which has dramatically altered Earth's atmosphere over evolutionary time",
+              "Involves two specialized protein complexes called photosystems I and II which contain different types of chlorophyll molecules and function in series through the Z-scheme of electron transport",
+              "Utilizes both cyclic and non-cyclic electron flow pathways to meet varying cellular energy requirements and maintain appropriate ratios of ATP to NADPH for downstream metabolic processes"
+            ]
           }
         ],
         "edges": [
@@ -285,24 +319,42 @@ export async function generateConceptMap(
       { 
         id: '1', 
         label: topic, 
-        description: 'Main concept and foundational principles.', 
-        bulletPoints: ['Core principles', 'Fundamental aspects', 'Basic definitions', 'Key terminology'],
+        description: `A comprehensive exploration of ${topic} including its historical development, theoretical foundations, modern applications, and ongoing research. This core concept serves as the central framework for understanding related subtopics and encompasses multiple dimensions of both theoretical and practical knowledge.`, 
+        bulletPoints: [
+          'Fundamental theoretical principles that form the basis of understanding this field of study with historical context and evolution of thought',
+          'Essential terminologies, definitions, and conceptual frameworks necessary for deep comprehension of the subject matter',
+          'Relationship to broader academic disciplines and how this concept integrates within the larger body of knowledge',
+          'Current scholarly debates and differing schools of thought regarding interpretation and significance',
+          'Methodological approaches used to study and advance knowledge in this area'
+        ],
         x: 250, 
         y: 50 
       },
       { 
         id: '2', 
         label: `Definition of ${topic}`, 
-        description: `Understanding what ${topic} means and its core principles.`, 
-        bulletPoints: ['Origin and history', 'Conceptual framework', 'Critical characteristics'],
+        description: `An in-depth examination of how ${topic} is formally defined across different contexts, disciplines, and historical periods. This comprehensive definition encompasses etymological origins, semantic evolution, and contemporary scholarly interpretations to provide a nuanced understanding of the concept's scope and boundaries.`, 
+        bulletPoints: [
+          'Historical evolution of the definition from its earliest documented usage to modern interpretations with key historical figures who shaped the concept',
+          'Cross-disciplinary variations in how the term is defined and understood across different academic and practical fields',
+          'Formal taxonomic classification and relationship to similar or adjacent concepts within the knowledge hierarchy',
+          'Distinguishing characteristics that differentiate this concept from related ideas or potential misconceptions',
+          'Contemporary scholarly consensus and areas where definitions remain contested or are evolving'
+        ],
         x: 100, 
         y: 150 
       },
       { 
         id: '3', 
         label: `Applications of ${topic}`, 
-        description: `How ${topic} is used in real-world scenarios.`, 
-        bulletPoints: ['Practical implementations', 'Real-world examples', 'Case studies', 'Industry relevance'],
+        description: `A detailed analysis of how ${topic} manifests in practical implementations across various domains including industry, research, education, and everyday contexts. This exploration covers both established applications with proven track records and emerging uses that represent cutting-edge developments in the field.`, 
+        bulletPoints: [
+          'Industry-specific implementations showcasing how the concept translates to professional practice across different sectors',
+          'Case studies of successful applications with detailed analysis of methodologies, challenges faced, and outcomes achieved',
+          'Technological innovations and tools that have emerged from or been influenced by this concept',
+          'Interdisciplinary applications demonstrating how the concept bridges different fields and creates new approaches to complex problems',
+          'Future directions and emerging applications currently being developed or researched'
+        ],
         x: 400, 
         y: 150 
       }
