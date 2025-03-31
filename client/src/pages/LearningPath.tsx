@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ export default function LearningPath() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('search');
   const [conceptMapData, setConceptMapData] = useState<any>(null);
+  const [savedMapData, setSavedMapData] = useState<any>(null); // For persisting edited maps
   const [selectedConcept, setSelectedConcept] = useState<{
     id: string;
     data: { label: string; description: string; bulletPoints?: string[]; [key: string]: any };
@@ -70,6 +71,7 @@ export default function LearningPath() {
 
       const data = await response.json();
       setConceptMapData(data);
+      setSavedMapData(data); // Keep a copy for later reference
       setSearchedTopic(topic);
       setSelectedConcept(null);
     } catch (error) {
@@ -83,6 +85,13 @@ export default function LearningPath() {
       setIsLoading(false);
     }
   };
+  
+  // Effect to load saved map data when switching between topics
+  useEffect(() => {
+    if (searchedTopic && savedMapData) {
+      setConceptMapData(savedMapData);
+    }
+  }, [searchedTopic, savedMapData]);
 
   // Handle node click in the concept map
   const handleNodeClick = useCallback((nodeId: string, nodeData: any) => {
@@ -110,7 +119,8 @@ export default function LearningPath() {
             ...node, 
             label: updatedData.label,
             description: updatedData.description,
-            bulletPoints: updatedData.bulletPoints
+            bulletPoints: updatedData.bulletPoints,
+            flashcards: updatedData.flashcards // Include flashcards in the node data
           };
         }
         return node;
@@ -119,6 +129,9 @@ export default function LearningPath() {
 
     // Update the concept map data
     setConceptMapData(updatedMapData);
+    
+    // Store in the saved map data to persist across re-renders
+    setSavedMapData(updatedMapData);
 
     // Update the selected concept data
     if (selectedConcept && selectedConcept.id === conceptId) {
@@ -128,7 +141,8 @@ export default function LearningPath() {
           ...selectedConcept.data,
           label: updatedData.label,
           description: updatedData.description,
-          bulletPoints: updatedData.bulletPoints
+          bulletPoints: updatedData.bulletPoints,
+          flashcards: updatedData.flashcards // Include flashcards in the selected concept
         }
       });
     }
@@ -138,6 +152,17 @@ export default function LearningPath() {
       description: 'Your changes have been saved successfully.',
     });
   }, [conceptMapData, selectedConcept, toast]);
+  
+  // Handle updating the entire concept map (e.g., when connections are changed)
+  const handleUpdateMap = useCallback((updatedMapData: any) => {
+    setConceptMapData(updatedMapData);
+    setSavedMapData(updatedMapData);
+    
+    toast({
+      title: 'Map updated',
+      description: 'Your concept map changes have been saved.',
+    });
+  }, [toast]);
 
   // Suggested topics for quick selection
   const suggestedTopics = [
@@ -261,8 +286,9 @@ export default function LearningPath() {
             <ConceptMap 
               topic={searchedTopic} 
               onNodeClick={handleNodeClick}
-              conceptMapData={conceptMapData}
+              conceptMapData={conceptMapData || savedMapData}
               notes={activeTab === 'notes' ? notes : undefined}
+              onUpdateMap={handleUpdateMap}
             />
           )}
         </div>

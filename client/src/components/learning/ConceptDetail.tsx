@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import FlashcardEditor from './FlashcardEditor';
 
 interface ConceptDetailProps {
   conceptId: string;
@@ -30,6 +32,10 @@ export default function ConceptDetail({ conceptId, conceptData, onClose, onUpdat
     description: conceptData.description,
     bulletPoints: conceptData.bulletPoints || []
   });
+  const [flashcards, setFlashcards] = useState<Array<{id: string; question: string; answer: string;}>>(
+    conceptData.flashcards || []
+  );
+  const { toast } = useToast();
   
   // Handle editing changes
   const handleEditChange = (field: string, value: string) => {
@@ -67,12 +73,61 @@ export default function ConceptDetail({ conceptId, conceptData, onClose, onUpdat
     });
   };
   
+  // Initialize flashcards if none exist
+  useEffect(() => {
+    if (!flashcards || flashcards.length === 0) {
+      // Create default flashcards based on the concept data
+      const defaultFlashcards = [
+        { 
+          id: `card-${Date.now()}-1`, 
+          question: `What is ${conceptData.label}?`, 
+          answer: conceptData.description 
+        },
+        { 
+          id: `card-${Date.now()}-2`, 
+          question: `How does ${conceptData.label} relate to the broader topic?`, 
+          answer: 'Add your understanding here.' 
+        }
+      ];
+      setFlashcards(defaultFlashcards);
+    }
+  }, [conceptData.label, conceptData.description, flashcards]);
+
+  // Handle flashcard save
+  const handleSaveFlashcards = (updatedFlashcards: Array<{id: string; question: string; answer: string;}>) => {
+    setFlashcards(updatedFlashcards);
+    
+    // If we have an onUpdate function, also update the parent component with the new flashcards
+    if (onUpdate) {
+      const updatedData = {
+        ...editData,
+        flashcards: updatedFlashcards
+      };
+      onUpdate(conceptId, updatedData);
+    }
+    
+    toast({
+      title: "Flashcards saved",
+      description: `${updatedFlashcards.length} flashcards updated for this concept.`
+    });
+  };
+
   // Save changes
   const saveChanges = () => {
     if (onUpdate) {
-      onUpdate(conceptId, editData);
+      // Include flashcards in the update
+      const updatedData = {
+        ...editData,
+        flashcards
+      };
+      onUpdate(conceptId, updatedData);
     }
     setIsEditing(false);
+    
+    toast({
+      title: "Concept updated",
+      description: "Your changes have been saved."
+    });
   };
 
   // Mock videos that would come from YouTube API
@@ -237,28 +292,16 @@ export default function ConceptDetail({ conceptId, conceptData, onClose, onUpdat
             </TabsContent>
             
             <TabsContent value="flashcards" className="min-h-[400px]">
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">Study Flashcards</h3>
-                    <Button variant="outline" size="sm">Export to PDF</Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {mockFlashcards.map((card, index) => (
-                      <div key={index} className="border rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 dark:bg-gray-800 p-3 border-b">
-                          <h4 className="font-medium">Question {index + 1}:</h4>
-                          <p>{card.question}</p>
-                        </div>
-                        <div className="p-3 bg-white dark:bg-gray-900">
-                          <h4 className="font-medium text-gray-500 dark:text-gray-400 mb-1">Answer:</h4>
-                          <p>{card.answer}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <ScrollArea className="h-[400px] px-1">
+                {/* Use our new FlashcardEditor component */}
+                <FlashcardEditor 
+                  flashcards={flashcards.map(card => ({
+                    id: card.id || `card-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                    question: card.question,
+                    answer: card.answer
+                  }))} 
+                  onSave={handleSaveFlashcards}
+                />
               </ScrollArea>
             </TabsContent>
           </Tabs>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -9,7 +9,12 @@ import ReactFlow, {
   Connection,
   Edge,
   Node,
-  NodeTypes
+  NodeTypes,
+  MarkerType,
+  useReactFlow,
+  Panel,
+  OnConnectStart,
+  OnConnectEnd,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -17,11 +22,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Plus, 
+  Link2, 
+  Trash2, 
+  Save, 
+  Undo2, 
+  ZoomIn, 
+  ZoomOut, 
+  Edit, 
+  Move,
+  ArrowRight,
+} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Custom node types
-const ConceptNode = ({ data }: { data: any }) => {
+const ConceptNode = ({ data, isConnectable }: { data: any, isConnectable?: boolean }) => {
   return (
-    <div className="px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px]">
+    <div className="relative px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-w-[250px]">
+      {data.isEditMode && (
+        <div className="absolute -right-3 -top-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-grab" 
+            onMouseDown={(e) => e.stopPropagation()}>
+          <Move className="h-3 w-3 text-white" />
+        </div>
+      )}
+      
       <div className="text-sm font-medium mb-1 text-primary">{data.label}</div>
       <div className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{data.description}</div>
       
@@ -35,15 +61,29 @@ const ConceptNode = ({ data }: { data: any }) => {
         </div>
       )}
       
-      {data.onClick && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="mt-1 w-full text-xs"
-          onClick={data.onClick}
-        >
-          View Details
-        </Button>
+      {data.isEditMode ? (
+        <div className="flex gap-1 mt-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs"
+            onClick={data.onAddConnection}
+          >
+            <Link2 className="h-3 w-3 mr-1" />
+            Connect
+          </Button>
+        </div>
+      ) : (
+        data.onClick && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mt-1 w-full text-xs"
+            onClick={data.onClick}
+          >
+            View Details
+          </Button>
+        )
       )}
     </div>
   );
@@ -58,30 +98,170 @@ type ConceptMapProps = {
   onNodeClick?: (nodeId: string, nodeData: any) => void;
   conceptMapData?: any; // Optional pre-fetched data
   notes?: string; // Optional notes for generating with notes
+  onUpdateMap?: (updatedMapData: any) => void; // Callback to update parent component
 };
 
 export default function ConceptMap({ 
   topic, 
   onNodeClick, 
   conceptMapData: initialConceptMapData,
-  notes
+  notes,
+  onUpdateMap
 }: ConceptMapProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+  const reactFlowInstance = useReactFlow();
+  const nodesRef = useRef<Node[]>([]);
+  const edgesRef = useRef<Edge[]>([]);
   const { toast } = useToast();
 
+  // Add connection between nodes
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)), 
-    [setEdges]
+    (params: Connection | Edge) => {
+      // Create a unique ID for the edge
+      const edgeId = `e-${params.source}-${params.target}`;
+      
+      // Check if this connection already exists
+      const edgeExists = edges.some(edge => 
+        edge.source === params.source && edge.target === params.target
+      );
+      
+      if (!edgeExists) {
+        setEdges((eds) => addEdge({
+          ...params,
+          id: edgeId,
+          type: 'smoothstep',
+          animated: false,
+          style: { stroke: '#9CA3AF' },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          },
+        }, eds));
+        
+        if (isEditMode && onUpdateMap) {
+          // Wait for the next tick to ensure edges are updated
+          setTimeout(() => {
+            const updatedMapData = getCurrentMapData();
+            onUpdateMap(updatedMapData);
+          }, 0);
+        }
+      }
+    }, 
+    [edges, setEdges, isEditMode, onUpdateMap]
   );
+
+  // Handle the start of creating a connection
+  const onConnectStart: OnConnectStart = useCallback(
+    (_, { nodeId }) => {
+      setConnectingNodeId(nodeId);
+    },
+    []
+  );
+
+  // Handle the end of creating a connection
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (event) => {
+      const targetElement = event.target as Element;
+      const targetNodeId = targetElement?.closest('.react-flow__node')?.getAttribute('data-id');
+      
+      if (connectingNodeId && targetNodeId && connectingNodeId !== targetNodeId) {
+        const newEdge = {
+          id: `e-${connectingNodeId}-${targetNodeId}`,
+          source: connectingNodeId,
+          target: targetNodeId,
+          type: 'smoothstep',
+          animated: false,
+          style: { stroke: '#9CA3AF' },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          },
+        };
+        
+        // Check if this connection already exists
+        const edgeExists = edges.some(edge => 
+          edge.source === connectingNodeId && edge.target === targetNodeId
+        );
+        
+        if (!edgeExists) {
+          setEdges((eds) => [...eds, newEdge]);
+          
+          if (isEditMode && onUpdateMap) {
+            // Wait for the next tick to ensure edges are updated
+            setTimeout(() => {
+              const updatedMapData = getCurrentMapData();
+              onUpdateMap(updatedMapData);
+            }, 0);
+          }
+        }
+      }
+      
+      setConnectingNodeId(null);
+    },
+    [connectingNodeId, edges, setEdges, isEditMode, onUpdateMap]
+  );
+
+  // Start creating connection from specific node
+  const handleAddConnection = useCallback((nodeId: string) => {
+    setConnectingNodeId(nodeId);
+    toast({
+      title: 'Creating connection',
+      description: 'Click on another node to create a connection',
+    });
+  }, [toast]);
 
   // Function to handle node click
   const handleNodeClick = useCallback((nodeId: string, nodeData: any) => {
-    if (onNodeClick) {
+    if (connectingNodeId && nodeId !== connectingNodeId) {
+      // Complete the connection
+      const newEdge = {
+        id: `e-${connectingNodeId}-${nodeId}`,
+        source: connectingNodeId,
+        target: nodeId,
+        type: 'smoothstep',
+        animated: false,
+        style: { stroke: '#9CA3AF' },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 20,
+          height: 20,
+        },
+      };
+      
+      // Check if this connection already exists
+      const edgeExists = edges.some(edge => 
+        edge.source === connectingNodeId && edge.target === nodeId
+      );
+      
+      if (!edgeExists) {
+        setEdges((eds) => [...eds, newEdge]);
+        
+        toast({
+          title: 'Connection created',
+          description: `Connected ${connectingNodeId} to ${nodeId}`,
+        });
+        
+        if (isEditMode && onUpdateMap) {
+          // Wait for the next tick to ensure edges are updated
+          setTimeout(() => {
+            const updatedMapData = getCurrentMapData();
+            onUpdateMap(updatedMapData);
+          }, 0);
+        }
+      }
+      
+      setConnectingNodeId(null);
+    } else if (!isEditMode && onNodeClick) {
       onNodeClick(nodeId, nodeData);
     }
-  }, [onNodeClick]);
+  }, [connectingNodeId, edges, setEdges, isEditMode, onNodeClick, onUpdateMap, toast]);
 
   // Function to organize nodes in a hierarchical layout
   const organizeNodes = useCallback((nodes: any[], edges: any[]) => {
@@ -165,6 +345,105 @@ export default function ConceptMap({
     return arrangedNodes;
   }, []);
 
+  // Get current map data for saving
+  const getCurrentMapData = useCallback(() => {
+    // Extract node data (position, content, etc.)
+    const nodeData = nodes.map(node => ({
+      id: node.id,
+      label: node.data.label,
+      description: node.data.description,
+      bulletPoints: node.data.bulletPoints || [],
+      x: node.position.x,
+      y: node.position.y,
+    }));
+    
+    // Extract edge connections
+    const edgeData = edges.map(edge => ({
+      source: edge.source,
+      target: edge.target
+    }));
+    
+    return {
+      nodes: nodeData,
+      edges: edgeData
+    };
+  }, [nodes, edges]);
+  
+  // Function to handle edge removal
+  const handleEdgeRemove = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
+    setSelectedEdge(null);
+    
+    if (isEditMode && onUpdateMap) {
+      // Wait for the next tick to ensure edges are updated
+      setTimeout(() => {
+        const updatedMapData = getCurrentMapData();
+        onUpdateMap(updatedMapData);
+      }, 0);
+    }
+  }, [setEdges, isEditMode, onUpdateMap, getCurrentMapData]);
+  
+  // Handle edge click to select it
+  const onEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    if (isEditMode) {
+      setSelectedEdge(edge.id);
+    }
+  }, [isEditMode]);
+  
+  // Toggle edit mode
+  const toggleEditMode = useCallback(() => {
+    // Store current state before toggling
+    if (!isEditMode) {
+      // Entering edit mode - save the current state for potential reset
+      nodesRef.current = [...nodes];
+      edgesRef.current = [...edges];
+    } else if (onUpdateMap) {
+      // Exiting edit mode - save changes
+      const updatedMapData = getCurrentMapData();
+      onUpdateMap(updatedMapData);
+    }
+    
+    setIsEditMode(!isEditMode);
+    setSelectedEdge(null);
+    setConnectingNodeId(null);
+    
+    // Update node data to include edit mode status
+    setNodes(nodes => nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        isEditMode: !isEditMode,
+        onAddConnection: !isEditMode ? () => handleAddConnection(node.id) : undefined,
+      }
+    })));
+  }, [isEditMode, nodes, edges, setNodes, onUpdateMap, getCurrentMapData, handleAddConnection]);
+  
+  // Save current changes
+  const saveChanges = useCallback(() => {
+    if (!onUpdateMap) return;
+    
+    const updatedMapData = getCurrentMapData();
+    onUpdateMap(updatedMapData);
+    
+    toast({
+      title: 'Changes saved',
+      description: 'Your concept map changes have been saved.',
+    });
+  }, [getCurrentMapData, onUpdateMap, toast]);
+  
+  // Reset to original state
+  const resetChanges = useCallback(() => {
+    if (nodesRef.current.length > 0) {
+      setNodes(nodesRef.current);
+      setEdges(edgesRef.current);
+      
+      toast({
+        title: 'Changes discarded',
+        description: 'Your concept map has been reset to its original state.',
+      });
+    }
+  }, [setNodes, setEdges, toast]);
+
   useEffect(() => {
     async function generateConceptMap() {
       setIsLoading(true);
@@ -193,7 +472,9 @@ export default function ConceptMap({
           },
           data: { 
             ...node, 
-            onClick: () => handleNodeClick(node.id, node) 
+            isEditMode: isEditMode,
+            onClick: () => handleNodeClick(node.id, node),
+            onAddConnection: isEditMode ? () => handleAddConnection(node.id) : undefined,
           }
         }));
         
@@ -203,8 +484,17 @@ export default function ConceptMap({
           target: edge.target,
           animated: false,
           type: 'smoothstep',
-          style: { stroke: '#9CA3AF' }
+          style: { stroke: '#9CA3AF' },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          }
         }));
+        
+        // Save the initial state for potential reset
+        nodesRef.current = [...flowNodes];
+        edgesRef.current = [...flowEdges];
         
         setNodes(flowNodes);
         setEdges(flowEdges);
@@ -221,7 +511,7 @@ export default function ConceptMap({
     }
     
     generateConceptMap();
-  }, [topic, initialConceptMapData, notes, setNodes, setEdges, handleNodeClick, toast, organizeNodes]);
+  }, [topic, initialConceptMapData, notes, setNodes, setEdges, handleNodeClick, toast, organizeNodes, isEditMode, handleAddConnection]);
 
   // Fetch concept map data from the API
   async function fetchConceptMapData(topicName: string, notes?: string) {
@@ -262,7 +552,21 @@ export default function ConceptMap({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Concept Map: {topic}</span>
-          {isLoading && <Spinner size="sm" />}
+          <div className="flex items-center gap-2">
+            {!isLoading && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="edit-mode"
+                  checked={isEditMode}
+                  onCheckedChange={toggleEditMode}
+                />
+                <Label htmlFor="edit-mode" className="text-sm">
+                  Edit Mode
+                </Label>
+              </div>
+            )}
+            {isLoading && <Spinner size="sm" />}
+          </div>
         </CardTitle>
         <CardDescription>
           Interactive visualization of key concepts and their relationships
@@ -281,13 +585,63 @@ export default function ConceptMap({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onConnectStart={isEditMode ? onConnectStart : undefined}
+            onConnectEnd={isEditMode ? onConnectEnd : undefined}
+            onEdgeClick={isEditMode ? onEdgeClick : undefined}
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="bottom-right"
+            deleteKeyCode="Delete"
+            selectionKeyCode="Shift"
+            multiSelectionKeyCode="Control"
+            // connectionMode is not needed
+            snapToGrid={isEditMode}
+            snapGrid={[20, 20]}
           >
             <Controls />
             <MiniMap />
             <Background color="#aaa" gap={16} />
+            
+            {/* Edit mode tools */}
+            {isEditMode && (
+              <>
+                {/* Top toolbar */}
+                <Panel position="top-center" className="bg-white dark:bg-gray-900 p-2 rounded-md shadow-md border border-gray-200 dark:border-gray-700 flex gap-2">
+                  <Button variant="outline" size="sm" onClick={saveChanges}>
+                    <Save className="h-4 w-4 mr-1" />
+                    Save
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={resetChanges}>
+                    <Undo2 className="h-4 w-4 mr-1" />
+                    Reset
+                  </Button>
+                </Panel>
+                
+                {/* Selected edge controls */}
+                {selectedEdge && (
+                  <Panel position="top-right" className="bg-white dark:bg-gray-900 p-2 rounded-md shadow-md border border-gray-200 dark:border-gray-700">
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={() => handleEdgeRemove(selectedEdge)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove Connection
+                    </Button>
+                  </Panel>
+                )}
+                
+                {/* Connection status */}
+                {connectingNodeId && (
+                  <Panel position="top-left" className="bg-white dark:bg-gray-900 p-2 rounded-md shadow-md border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center text-sm">
+                      <ArrowRight className="h-4 w-4 mr-1 text-primary" />
+                      Click on another node to connect
+                    </div>
+                  </Panel>
+                )}
+              </>
+            )}
           </ReactFlow>
         )}
       </CardContent>
