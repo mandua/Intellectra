@@ -14,6 +14,7 @@ import ThemeToggle from "@/components/layout/ThemeToggle";
 import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { UserProvider } from "@/context/UserContext";
+import intellectraLogo from "@/assets/intellectra.jpg";
 
 function Router() {
   const [location] = useLocation();
@@ -53,10 +54,10 @@ function App() {
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-neutral-800 shadow-sm">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white">
-                  <span className="material-icons text-xl">school</span>
+                <div className="w-8 h-8 rounded-md overflow-hidden">
+                  <img src={intellectraLogo} alt="Intellectra Logo" className="w-full h-full object-cover" />
                 </div>
-                <h1 className="text-lg font-bold text-primary dark:text-primary-light">StudyAI</h1>
+                <h1 className="text-lg font-bold text-primary dark:text-primary-light">Intellectra</h1>
               </div>
               <button 
                 className="p-1 rounded-md text-neutral-700 dark:text-neutral-300"
@@ -72,10 +73,10 @@ function App() {
                 <div className="w-64 h-full bg-white dark:bg-neutral-800 shadow-lg animate-fadeIn">
                   <div className="p-4 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white">
-                        <span className="material-icons text-xl">school</span>
+                      <div className="w-8 h-8 rounded-md overflow-hidden">
+                        <img src={intellectraLogo} alt="Intellectra Logo" className="w-full h-full object-cover" />
                       </div>
-                      <h1 className="text-lg font-bold text-primary dark:text-primary-light">StudyAI</h1>
+                      <h1 className="text-lg font-bold text-primary dark:text-primary-light">Intellectra</h1>
                     </div>
                     <button 
                       className="p-1 rounded-md text-neutral-700 dark:text-neutral-300"
