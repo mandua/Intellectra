@@ -54,7 +54,7 @@ function App() {
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-neutral-800 shadow-sm">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md overflow-hidden">
+                <div className="w-8 h-8 rounded-full overflow-hidden">
                   <img src={intellectraLogo} alt="Intellectra Logo" className="w-full h-full object-cover" />
                 </div>
                 <h1 className="text-lg font-bold text-primary dark:text-primary-light">Intellectra</h1>
@@ -73,7 +73,7 @@ function App() {
                 <div className="w-64 h-full bg-white dark:bg-neutral-800 shadow-lg animate-fadeIn">
                   <div className="p-4 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md overflow-hidden">
+                      <div className="w-8 h-8 rounded-full overflow-hidden">
                         <img src={intellectraLogo} alt="Intellectra Logo" className="w-full h-full object-cover" />
                       </div>
                       <h1 className="text-lg font-bold text-primary dark:text-primary-light">Intellectra</h1>

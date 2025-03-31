@@ -1,4 +1,5 @@
 import React from 'react';
+import intellectraLogo from '@/assets/intellectra.jpg';
 
 // Props for customizing the logo
 interface LogoProps {
@@ -10,7 +11,7 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ size = 32, className = '' }) => {
   return (
     <img 
-      src="/favicon.jpg" 
+      src={intellectraLogo} 
       alt="Intellectra Logo" 
       width={size} 
       height={size} 
