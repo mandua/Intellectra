@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Task } from "@/lib/types";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, isToday, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Get priority border color
 const getPriorityBorderColor = (priority: number): string => {
@@ -30,6 +36,137 @@ const formatDueDate = (dueDate: string | Date): string => {
   
   const daysLeft = Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   return `Due in ${daysLeft} days`;
+};
+
+const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState("2"); // Default medium priority
+  const [category, setCategory] = useState("");
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData: Omit<Task, 'id' | 'userId' | 'completed'>) => {
+      const res = await apiRequest('POST', '/api/tasks', taskData);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      setOpen(false);
+      resetForm();
+      onTaskAdded();
+      toast({
+        title: "Task created successfully",
+        description: "Your new task has been added to your schedule.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error creating task",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setDueDate("");
+    setPriority("2");
+    setCategory("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createTaskMutation.mutate({
+      title,
+      description,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      priority: parseInt(priority),
+      category,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="text-primary dark:text-primary-light p-1 rounded-full hover:bg-primary-light/10">
+          <span className="material-icons">add</span>
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Task</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter task title"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter task description"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority</Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">High</SelectItem>
+                <SelectItem value="2">Medium</SelectItem>
+                <SelectItem value="3">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Input
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="E.g., Study, Personal, Work"
+            />
+          </div>
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={createTaskMutation.isPending || !title}
+            >
+              {createTaskMutation.isPending ? "Adding..." : "Add Task"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 const PriorityTasks = () => {
@@ -90,13 +227,16 @@ const PriorityTasks = () => {
     </div>
   );
   
+  const handleTaskAdded = () => {
+    // This function is called after a new task is successfully added
+    // We're already invalidating the query in the mutation, so no need to do anything else here
+  };
+  
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Priority Tasks</h2>
-        <button className="text-primary dark:text-primary-light p-1 rounded-full hover:bg-primary-light/10">
-          <span className="material-icons">add</span>
-        </button>
+        <AddTaskDialog onTaskAdded={handleTaskAdded} />
       </div>
       
       <div className="space-y-3">
